@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Cache-Control" content="no-store">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="/app.ico">
+  <title>祭晾屋 image storage v1.3</title>
+  <link rel="stylesheet" href="style.css?v=65">
+</head>
+<body>
+  <header>
+    <div class="headrow">
+      <div class="brand">祭晾屋 <span class="sub">image storage v1.3</span></div>
+      <span class="fsp"></span>
+      <div class="dens" title="缩略图大小">
+        <span class="dens-label">缩略图</span>
+        <button id="dens-s" class="seg" data-dens="s">小</button>
+        <button id="dens-m" class="seg active" data-dens="m">中</button>
+        <button id="dens-l" class="seg" data-dens="l">大</button>
+      </div>
+      <label class="chk gifoffwrap" title="勾选后缩略图里的动图只显示第一帧（省资源）">
+        <input type="checkbox" id="gifoff">动图暂停
+      </label>
+    </div>
+    <div class="toolbar">
+      <input id="folder" placeholder="点右侧「选择文件夹」或手动输入路径" spellcheck="false">
+      <button id="folderbtn">选择文件夹…</button>
+      <button id="scan" class="primary">扫描</button>
+      <label class="chk" title="勾选后扫描时同时扫描所有子文件夹">
+        <input type="checkbox" id="subfolders">包含子文件夹
+      </label>
+      <label class="chk" title="扫描时同时包含视频（mp4/mov/webm 等）">
+        <input type="checkbox" id="includevideo" checked>包含视频
+      </label>
+      <span class="vsep"></span>
+      <label class="th">阈值 <input id="threshold" type="number" step="0.05" value="0.35"></label>
+      <button id="start" class="primary">开始打标</button>
+      <button id="stop">停止</button>
+      <label class="chk" title="勾选后忽略已有标签，全量重新打标">
+        <input type="checkbox" id="forcetag">重打全部
+      </label>
+      <input id="fname" placeholder="搜文件名…" class="fsearch" spellcheck="false">
+    </div>
+    <div class="progress-row">
+      <div id="bar"><div id="barfill"></div></div>
+      <span id="progresstext"></span>
+    </div>
+    <div id="modelbar" hidden>
+      <span class="muted small">本地模型未安装</span>
+      <button id="mdlbtn">开始下载模型</button>
+      <span id="mdlprog" class="muted small"></span>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside>
+      <div id="statrow">
+        <button id="stat-all" class="stat active">全部 <b id="statAllN">0</b></button>
+        <button id="stat-untagged" class="stat">未标 <b id="statUnN">0</b></button>
+        <button id="stat-failed" class="stat">失败 <b id="statFailN">0</b></button>
+      </div>
+      <details id="diffsec">
+        <summary>📁 差分图</summary>
+        <div class="row2">
+          <button id="diffbtn">检测差分图</button>
+          <button id="diffclr">清除</button>
+        </div>
+        <div class="th" title="阈值越小越严格：漏检就调大，误并成大组就调小">
+          阈值 <input id="diffthreshold" type="number" min="1" max="64" step="1" value="20">
+        </div>
+        <div id="diffprog" hidden>
+          <div class="dbar"><div id="dbarfill"></div></div>
+          <span id="dbarpct" class="muted small"></span>
+        </div>
+        <div id="diffmeta" class="muted small"></div>
+        <button id="difftoggle" hidden>按分组显示缩略图</button>
+        <div id="difflist"></div>
+        <div id="diffbar" hidden>
+          <span id="diffinfo" class="muted small"></span>
+          <input id="difftarget" placeholder="目标文件夹名">
+          <button id="diffmove" class="primary">移动整组</button>
+        </div>
+      </details>
+      <h2>标签</h2>
+      <div id="catbar"></div>
+      <input id="tagfilter" placeholder="🔍 搜索标签…（可多选）" spellcheck="false">
+      <div id="selchips" hidden></div>
+      <div id="taglist"></div>
+      <div class="move">
+        <input id="foldername" placeholder="目标文件夹名">
+        <button id="move" class="primary" disabled>移动</button>
+      </div>
+      <button id="undobtn" hidden>↩ 撤销上次移动</button>
+    </aside>
+    <main id="grid"></main>
+  </div>
+
+  <button id="totop" hidden title="回到顶部">↑</button>
+
+  <div id="viewer" hidden>
+    <div id="viewerbody">
+      <img id="viewerimg" src="" alt="">
+      <canvas id="gifcanvas" hidden></canvas>
+      <video id="viewervideo" controls preload="auto" hidden></video>
+    </div>
+    <div id="viewertags" hidden>
+      <span class="vt-label">标签：</span>
+      <div id="viewertaglist"></div>
+      <button id="vtadd" title="给这张图手动添加标签">＋</button>
+    </div>
+    <div id="gifbar" hidden>
+      <button id="gifplay" title="播放/暂停">⏸</button>
+      <input id="gifseek" type="range" min="0" max="1" value="0" step="1">
+      <span id="giflabel" class="muted">1/1</span>
+    </div>
+    <div id="viewerbar">
+      <span id="viewertitle"></span>
+      <span id="viewerzoom" class="muted">100%</span>
+      <button id="fit">适应</button>
+      <button id="prev">‹</button>
+      <button id="next">›</button>
+      <button id="close">✕</button>
+    </div>
+  </div>
+
+  <div id="ctx" hidden></div>
+  <div id="toast" hidden></div>
+
+  <script src="app.js?v=65"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.0
+numpy>=1.26
+Pillow>=10.0
+onnxruntime-directml>=1.17
+opencv-python>=4.9
+imageio-ffmpeg>=0.4.9

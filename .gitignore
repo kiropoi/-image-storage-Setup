@@ -1,0 +1,28 @@
+# ---- 构建产物 / 缓存 ----
+build/
+dist/
+dist_setup/
+__pycache__/
+*.pyc
+*.pyo
+
+# ---- 大型二进制 / 本地资源（ffmpeg 运行时可由 imageio-ffmpeg 自动提供）----
+ffmpeg/
+eva02/
+
+# ---- 用户私有数据（不要上传）----
+tagdata/
+settings.json
+webview_profile/
+video_strips/
+.tagstore/
+.image_tagger_cache.json
+
+# ---- 日志 ----
+*.log
+build_log*.txt
+setup_log.txt
+
+# ---- 其他 ----
+.DS_Store
+Thumbs.db
