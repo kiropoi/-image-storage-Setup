@@ -71,6 +71,43 @@ _strip_cache = {}     # 视频预览胶片条：{(path,n): (mtime, png_bytes)}
 _lock = threading.Lock()
 MOVE_LOG = []        # 最近一次移动记录（撤销用）
 
+# 版本与自动更新检查（启动时后台查 GitHub 最新 Release，仅提示、不自动装）
+APP_VERSION = "1.3"
+UPDATE_REPO = "kiropoi/-image-storage-Setup"
+_update_info = {"checked": False, "latest": None, "has_update": False, "url": ""}
+_update_lock = threading.Lock()
+
+
+def _parse_version(s):
+    nums = []
+    for part in re.split(r"[^0-9]+", (s or "").strip().lstrip("vV")):
+        if part.isdigit():
+            nums.append(int(part))
+    return tuple(nums) if nums else (0,)
+
+
+def _check_for_update():
+    """后台查询 GitHub 最新版本；失败静默（无网络时不影响启动）。"""
+    try:
+        req = urllib.request.Request(
+            f"https://api.github.com/repos/{UPDATE_REPO}/releases/latest",
+            headers={"User-Agent": "image-storage-updater",
+                     "Accept": "application/vnd.github+json"})
+        with urllib.request.urlopen(req, timeout=8) as r:
+            data = json.loads(r.read().decode("utf-8"))
+        latest = (data.get("tag_name") or "").lstrip("vV")
+        url = data.get("html_url") or ""
+        with _update_lock:
+            _update_info.update({
+                "checked": True, "latest": latest,
+                "has_update": _parse_version(latest) > _parse_version(APP_VERSION),
+                "url": url,
+            })
+    except Exception:
+        with _update_lock:
+            _update_info.update({"checked": True, "latest": None,
+                                 "has_update": False, "url": ""})
+
 # 模型下载管理（安装包只装主体，首次运行自动下载模型）
 _MODEL_URLS = [
     os.environ.get(
@@ -484,6 +521,8 @@ def get_state():
         "last_sub": bool(core.load_settings().get("last_sub", False)),
         "last_video": bool(core.load_settings().get("last_video", True)),
         "can_undo": bool(MOVE_LOG),
+        "app_version": APP_VERSION,
+        "update": dict(_update_info),
     }
 
 
@@ -1019,6 +1058,7 @@ if __name__ == "__main__":
     import uvicorn
 
     ensure_model_download()   # 安装包首次运行：自动下载模型（已存在则跳过）
+    threading.Thread(target=_check_for_update, daemon=True).start()   # 后台查更新
 
     HOST = "127.0.0.1"
     PORT = 8000

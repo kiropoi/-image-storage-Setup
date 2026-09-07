@@ -143,6 +143,17 @@ input { flex: 1; min-width: 200px; }
 .progress-row.idle { display: none; }
 #modelbar { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
 #modelbar[hidden] { display: none; }
+
+/* 更新提示条 */
+#updatebar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 14px;
+  background: var(--primary-soft);
+  border-bottom: 1px solid rgba(94, 106, 210, .4);
+  color: var(--ink); font-size: 13px;
+}
+#updatebar[hidden] { display: none; }
+#updatebar .fsp { flex: 1; }
 #mdlprog { font-variant-numeric: tabular-nums; }
 #bar {
   flex: 1; height: 4px; background: var(--surface-3);

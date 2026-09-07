@@ -1309,6 +1309,27 @@ async function autoRestore() {
   }
 }
 
+// 启动时检查更新：等后端后台查完 GitHub 最新版本，有新版就弹提示条
+let updateBannerShown = false;
+async function checkUpdateBanner() {
+  if (updateBannerShown) return;
+  updateBannerShown = true;
+  // 后端在后台查 GitHub（约几秒），轮询直到 checked 或超时
+  for (let i = 0; i < 24; i++) {
+    if (state && state.update && state.update.checked) break;
+    await new Promise(r => setTimeout(r, 500));
+    if (state && state.update && state.update.checked) break;
+    try { state = await api("/api/state"); } catch (e) { /* ignore */ }
+  }
+  if (state && state.update && state.update.has_update && state.update.url) {
+    $("updatetext").textContent =
+      `发现新版本 v${state.update.latest}（当前 v${state.app_version || "1.3"}）`;
+    $("updatebar").hidden = false;
+    $("updategobtn").onclick = () => window.open(state.update.url, "_blank");
+    $("updatelater").onclick = () => { $("updatebar").hidden = true; };
+  }
+}
+
 refresh().then(async () => {
   // 缩略图密度（记住选择）
   let d = "m";
@@ -1324,6 +1345,8 @@ refresh().then(async () => {
   $("totop").onclick = () => grid.scrollTo({ top: 0, behavior: "smooth" });
   // 自动回到上次目录
   autoRestore();
+  // 检查更新：等后端后台查完 GitHub 最新版本，有新版本就弹提示条
+  checkUpdateBanner();
   // 模型缺失：自动下载 + 进度监视
   if (state && state.model && !state.model.present) {
     try {
